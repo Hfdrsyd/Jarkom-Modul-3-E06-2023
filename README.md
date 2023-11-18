@@ -294,9 +294,9 @@ mkdir -p /etc/nginx/rahasisakita
 htpasswd -cb /etc/nginx/rahasisakita/htpasswd netics ajkE06
 
 ff='upstream granz{
-    server 192.209.3.1;
-    server 192.209.3.2;
-    server 192.209.3.3;
+    server 192.209.3.1 weight=4;
+    server 192.209.3.2 weight=2;
+    server 192.209.3.3 weight=1;
 }
 
 upstream riegel{
@@ -341,7 +341,64 @@ ab -n 1000 -c 100 -g out.txt http://granz.channel.e06.com/
 ### (8) dan (9)
 #### <a href="https://docs.google.com/document/d/1YD0pExQ0IW7_EknqfYw6FCfXo7eCfq0nbOAaxD0O1EU/edit?usp=sharing">Silahkan buka Grimore disini untuk melihat hasil </a> 
 
-#### (10)
+#### (10), (11), dan (12) 
+- autentikasi di LB dengan dengan kombinasi username: “netics” dan password: “ajkyyy”
+- setiap request yang mengandung /its akan di proxy passing menuju halaman https://www.its.ac.id
+- LB ini hanya boleh diakses oleh client dengan IP [Prefix IP].3.69, [Prefix IP].3.70, [Prefix IP].4.167, dan [Prefix IP].4.168. (12)
+berikut konfigurasi dari lb nya:
+```
+apt-get update
+apt-get install apache2-utils -y
+
+mkdir -p /etc/nginx/rahasisakita
+htpasswd -cb /etc/nginx/rahasisakita/htpasswd netics ajkE06
+
+ff='upstream granz{
+    server 192.209.3.1;
+    server 192.209.3.2;
+    server 192.209.3.3;
+}
+
+upstream riegel{
+    server 192.209.4.1;
+    server 192.209.4.2;
+    server 192.209.4.3;
+}
+
+server {
+    listen 81;
+    server_name _; # Change to your actual domain
+
+    location / {
+        allow 192.209.3.69;
+        allow 192.209.3.70;
+        allow 192.209.4.167;
+        allow 192.209.4.168;
+        deny all;
+        auth_basic "Restricted Content";
+        auth_basic_user_file /etc/nginx/rahasisakita/htpasswd;
+        proxy_pass http://granz;
+    }
+    location ~* /*its {
+        proxy_pass https://www.its.ac.id;
+    }
+}
+
+server {
+    listen 80;
+    server_name _; # Change to your Laravel domain
+
+    location / {
+        proxy_pass http://riegel;
+    }
+    location ~* /*its {
+        proxy_pass https://www.its.ac.id;
+    }
+}'
+echo "$ff" > /etc/nginx/sites-available/lb-switch4
+service nginx restart
+```
+
 
 
 
