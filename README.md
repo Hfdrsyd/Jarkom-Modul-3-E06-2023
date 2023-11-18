@@ -1,4 +1,4 @@
-# Jarkom-Modul-2-E06-2023
+# Jarkom-Modul-3-E06-2023
 Berikut adalah repository dari kelompok E06 untuk pengerjaan Praktikum Modul 3 Jaringan Komputer. Repository ini akan berisikan dokumentasi cara pengerjaan tiap soal, screenshot output, dan kendala yang dialami.
 
 # Anggota Kelompok
@@ -214,3 +214,70 @@ service bind9 restart
 #### ping testing pada client
 
 ![ping](https://github.com/Hfdrsyd/Jarkom-Modul-3-E06-2023/blob/main/images/ping.png)
+
+
+## Bagian 1
+Berjalannya waktu, petualang diminta untuk melakukan deployment.
+1. Pada masing-masing worker PHP, lakukan konfigurasi virtual host untuk website berikut dengan menggunakan php 7.3. (6)
+2. Kepala suku dari Bredt Region memberikan resource server sebagai berikut:
+Lawine, 4GB, 2vCPU, dan 80 GB SSD.
+Linie, 2GB, 2vCPU, dan 50 GB SSD.
+Lugner 1GB, 1vCPU, dan 25 GB SSD.
+aturlah agar Eisen dapat bekerja dengan maksimal, lalu lakukan testing dengan 1000 request dan 100 request/second. (7)
+3. Karena diminta untuk menuliskan grimoire, buatlah analisis hasil testing dengan 200 request dan 10 request/second masing-masing algoritma Load Balancer dengan ketentuan sebagai berikut:
+- Nama Algoritma Load Balancer
+- Report hasil testing pada Apache Benchmark
+- Grafik request per second untuk masing masing algoritma. 
+- Analisis (8)
+4. Dengan menggunakan algoritma Round Robin, lakukan testing dengan menggunakan 3 worker, 2 worker, dan 1 worker sebanyak 100 request dengan 10 request/second, kemudian tambahkan grafiknya pada grimoire. (9)
+5. Selanjutnya coba tambahkan konfigurasi autentikasi di LB dengan dengan kombinasi username: “netics” dan password: “ajkyyy”, dengan yyy merupakan kode kelompok. Terakhir simpan file “htpasswd” nya di /etc/nginx/rahasisakita/ (10)
+6. Lalu buat untuk setiap request yang mengandung /its akan di proxy passing menuju halaman https://www.its.ac.id. (11) hint: (proxy_pass)
+7. Selanjutnya LB ini hanya boleh diakses oleh client dengan IP [Prefix IP].3.69, [Prefix IP].3.70, [Prefix IP].4.167, dan [Prefix IP].4.168. (12) hint: (fixed in dulu clinetnya)
+
+
+#### (1) pada setiap php worker (Lawine, Linie, Lugner) setting sebagai berikut untuk deployment
+```
+apt-get update && apt install nginx php php-fpm -y git
+git config --global http.sslVerify false
+git clone https://github.com/Hfdrsyd/Jarkom-Modul-3-E06-2023.git
+
+mkdir /var/www/granz
+cp -r /Jarkom-Modul-3-E06-2023/granz.channel.yyy.com/modul-3 /var/www/granz
+
+gg='server {
+
+        listen 80;
+
+        root /var/www/granz/modul-3;
+
+        index index.php index.html index.htm;
+        server_name _;
+
+        location / {
+                        try_files $uri $uri/ /index.php?$query_string;
+        }
+
+        # pass PHP scripts to FastCGI server
+        location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/var/run/php/php7.3-fpm.sock;
+        }
+
+        location ~ /\.ht {
+                        deny all;
+        }
+
+        error_log /var/log/nginx/jarkom_error.log;
+        access_log /var/log/nginx/jarkom_access.log;
+ }'
+
+
+echo "$gg" > /etc/nginx/sites-available/jarkom
+
+rm -rf /etc/nginx/sites-enabled/default
+ln -s /etc/nginx/sites-available/jarkom /etc/nginx/sites-enabled
+service php7.3-fpm start
+service nginx restart
+```
+
+
