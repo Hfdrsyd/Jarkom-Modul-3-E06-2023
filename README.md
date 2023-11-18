@@ -287,12 +287,22 @@ Berikut lynx pada salah satu worker (Linie) di client
 #### (7) lakukan setting pada load balancer (Eisen)
 setting dilakukan menggunakan algoritma Round Robin namun menggunakan weight sehingga dapat seolah-olah merepresentasikan resource server.
 ```
-apt install nginx -y
-ff='
-upstream granz{
-    server 192.209.3.1 weight=4;
-    server 192.209.3.2 weight=2;
-    server 192.209.3.3 weight=1;
+apt-get update
+apt-get install apache2-utils -y
+
+mkdir -p /etc/nginx/rahasisakita
+htpasswd -cb /etc/nginx/rahasisakita/htpasswd netics ajkE06
+
+ff='upstream granz{
+    server 192.209.3.1;
+    server 192.209.3.2;
+    server 192.209.3.3;
+}
+
+upstream riegel{
+    server 192.209.4.1;
+    server 192.209.4.2;
+    server 192.209.4.3;
 }
 
 server {
@@ -300,15 +310,23 @@ server {
     server_name _; # Change to your actual domain
 
     location / {
+        auth_basic "Restricted Content";
+        auth_basic_user_file /etc/nginx/rahasisakita/htpasswd;
         proxy_pass http://granz;
     }
 }
-'
 
-echo "$ff" > /etc/nginx/sites-available/lb-switch4
+server {
+    listen 80;
+    server_name _; # Change to your Laravel domain
+
+    location / {
+        proxy_pass http://riegel;
+    }
+}'
 unlink /etc/nginx/sites-enabled/default
+echo "$ff" > /etc/nginx/sites-available/lb-switch4
 ln -sf /etc/nginx/sites-available/lb-switch4 /etc/nginx/sites-enabled/lb-switch4
-service nginx restart
 ```
 ![hasil lynx](nanti diubah)
 
