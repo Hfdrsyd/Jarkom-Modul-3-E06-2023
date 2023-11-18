@@ -211,4 +211,6 @@ echo "$d" > /etc/bind/named.conf.options
 service bind9 restart
 ```
 
+#### ping testing pada client
 
+![ping](https://github.com/Hfdrsyd/Jarkom-Modul-3-E06-2023/blob/main/images/ping.png)
