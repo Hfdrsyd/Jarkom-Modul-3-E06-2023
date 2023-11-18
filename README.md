@@ -296,8 +296,8 @@ upstream granz{
 }
 
 server {
-    listen 80;
-    server_name granz.channel.e06.com; # Change to your actual domain
+    listen 81;
+    server_name _; # Change to your actual domain
 
     location / {
         proxy_pass http://granz;
