@@ -235,7 +235,7 @@ aturlah agar Eisen dapat bekerja dengan maksimal, lalu lakukan testing dengan 10
 7. Selanjutnya LB ini hanya boleh diakses oleh client dengan IP [Prefix IP].3.69, [Prefix IP].3.70, [Prefix IP].4.167, dan [Prefix IP].4.168. (12) hint: (fixed in dulu clinetnya)
 
 
-#### (1) pada setiap php worker (Lawine, Linie, Lugner) setting sebagai berikut untuk deployment
+#### (6) pada setiap php worker (Lawine, Linie, Lugner) setting sebagai berikut untuk deployment
 ```
 apt-get update && apt install nginx php php-fpm -y git
 git config --global http.sslVerify false
@@ -279,5 +279,51 @@ ln -s /etc/nginx/sites-available/jarkom /etc/nginx/sites-enabled
 service php7.3-fpm start
 service nginx restart
 ```
+
+Berikut lynx pada salah satu worker (Linie) di client
+
+![lynx](images/lynx.png)
+
+#### (7) lakukan setting pada load balancer (Eisen)
+setting dilakukan menggunakan algoritma Round Robin namun menggunakan weight sehingga dapat seolah-olah merepresentasikan resource server.
+```
+apt install nginx -y
+ff='
+upstream granz{
+    server 192.209.3.1 weight=4;
+    server 192.209.3.2 weight=2;
+    server 192.209.3.3 weight=1;
+}
+
+server {
+    listen 80;
+    server_name granz.channel.e06.com; # Change to your actual domain
+
+    location / {
+        proxy_pass http://granz;
+    }
+}
+'
+
+echo "$ff" > /etc/nginx/sites-available/lb-switch4
+unlink /etc/nginx/sites-enabled/default
+ln -sf /etc/nginx/sites-available/lb-switch4 /etc/nginx/sites-enabled/lb-switch4
+service nginx restart
+```
+![hasil lynx](nanti diubah)
+
+#### testing dengan 1000 request dan 100 request/second.
+```
+ab -n 1000 -c 100 -g out.txt http://granz.channel.e06.com/
+```
+![htop](nanti diubah)
+
+![ab](nanti diubah)
+
+### (8) dan (9)
+#### <a href="https://docs.google.com/document/d/1YD0pExQ0IW7_EknqfYw6FCfXo7eCfq0nbOAaxD0O1EU/edit?usp=sharing">Silahkan buka Grimore disini untuk melihat hasil </a> 
+
+#### (10)
+
 
 
