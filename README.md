@@ -77,6 +77,72 @@ iface eth0 inet static
 	gateway 192.209.1.1
 ```
 
+- Denken
+```
+auto eth0
+iface eth0 inet static
+	address 192.209.2.2
+	netmask 255.255.255.0
+	gateway 192.209.2.1
+```
+
+- Eisen
+```
+auto eth0
+iface eth0 inet static
+	address 192.209.2.3
+	netmask 255.255.255.0
+	gateway 192.209.2.1
+```
+
+- Lawine
+```
+auto eth0
+iface eth0 inet dhcp
+hwaddress ether 8a:d5:50:e4:b5:66
+```
+
+- Linie
+```
+auto eth0
+iface eth0 inet dhcp
+hwaddress ether 92:2a:32:38:62:fe
+```
+
+- Lugner
+```
+auto eth0
+iface eth0 inet dhcp
+hwaddress ether c2:21:bb:45:de:b9
+```
+
+- Frieren
+```
+auto eth0
+iface eth0 inet dhcp
+hwaddress ether 96:b8:1f:4e:bf:fb
+```
+
+- Flamme
+```
+auto eth0
+iface eth0 inet dhcp
+hwaddress ether d2:59:48:28:a2:d4
+```
+
+- Fern
+```
+auto eth0
+iface eth0 inet dhcp
+hwaddress ether 86:ec:9f:90:81:6d
+```
+
+- Client
+```
+auto eth0
+iface eth0 inet dhcp
+```
+
 #### Setting pada Himmel/DHCP Server
 ```
 apt-get update
