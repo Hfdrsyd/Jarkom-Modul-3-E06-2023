@@ -896,3 +896,105 @@ lynx http://192.209.2.3/frieren
 ![image](images/frieren.png)
 
 ### (19)
+```
+echo '[www]
+user = eisen_user
+group = eisen_user
+listen = /run/php/php8.0-fpm-einen.sock
+listen.owner = www-data
+listen.group = www-data
+php_admin_value[disable_functions] = exec,passthru,shell_exec,system
+php_admin_flag[allow_url_fopen] = off
+
+; Choose how the process manager will control the number of child processes.
+
+ pm.max_children = 5
+ pm.start_servers = 3
+ pm.min_spare_servers = 1
+ pm.max_spare_servers = 5
+
+; pm.max_children = 35
+; pm.start_servers = 5
+; pm.min_spare_servers = 3
+; pm.max_spare_servers = 10
+
+;pm = dynamic
+;pm.max_children = 50
+;pm.start_servers = 10
+;pm.min_spare_servers = 10
+;pm.max_spare_servers = 20
+
+
+
+
+' > /etc/php/8.0/fpm/pool.d/eisen.conf
+
+groupadd eisen_user
+useradd -g eisen_user eisen_user
+
+service php8.0-fpm restart
+
+echo "
+server {
+
+    listen 80;
+
+    root /var/www/laravel-praktikum-jarkom/public;
+
+    index index.php index.html index.htm;
+    server_name _;
+
+    location / {
+            try_files \$uri \$uri/ /index.php?\$query_string;
+    }
+
+    # pass PHP scripts to FastCGI server
+    location ~ \.php\$ {
+    include snippets/fastcgi-php.conf;
+    fastcgi_pass unix:/run/php/php8.0-fpm-einen.sock;
+    }
+
+location ~ /\.ht {
+            deny all;
+    }
+
+    error_log /var/log/nginx/implementasi_error.log;
+    access_log /var/log/nginx/implementasi_access.log;
+}" > /etc/nginx/sites-available/implementasi
+
+service nginx restart
+```
+terdiri dari 3 percobaan:
+```
+pm.max_children = 5
+ pm.start_servers = 3
+ pm.min_spare_servers = 1
+ pm.max_spare_servers = 5
+
+; pm.max_children = 35
+; pm.start_servers = 5
+; pm.min_spare_servers = 3
+; pm.max_spare_servers = 10
+
+;pm.max_children = 50
+;pm.start_servers = 10
+;pm.min_spare_servers = 10
+;pm.max_spare_servers = 20
+```
+
+![image](images/percobaan1.png)
+
+![image](images/percobaan2.png)
+
+![image](images/percobaan3.png)
+
+### (20) Nampaknya hanya menggunakan PHP-FPM tidak cukup untuk meningkatkan performa dari worker maka implementasikan Least-Conn pada Eisen. Untuk testing kinerja dari worker tersebut dilakukan sebanyak 100 request dengan 10 request/second.
+```
+upstream riegel{
+    least_conn;
+    server 192.209.4.1;
+    server 192.209.4.2;
+    server 192.209.4.3;
+}
+```
+![image](images/no20.png)
