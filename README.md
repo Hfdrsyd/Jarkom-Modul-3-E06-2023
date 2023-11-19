@@ -463,5 +463,262 @@ service nginx restart
 ![auth](images/redirect.gif)
 
 ![auth](images/no12.png)
+## Bagian 3
+1. Semua data yang diperlukan, diatur pada Denken dan harus dapat diakses oleh Frieren, Flamme, dan Fern. (13)
+2. Frieren, Flamme, dan Fern memiliki Riegel Channel sesuai dengan quest guide berikut. Jangan lupa melakukan instalasi PHP8.0 dan Composer (14)
+3. Riegel Channel memiliki beberapa endpoint yang harus ditesting sebanyak 100 request dengan 10 request/second. Tambahkan response dan hasil testing pada grimoire.
+- POST /auth/register (15)
+- POST /auth/login (16)
+- GET /me (17)
+4. Untuk memastikan ketiganya bekerja sama secara adil untuk mengatur Riegel Channel maka implementasikan Proxy Bind pada Eisen untuk mengaitkan IP dari Frieren, Flamme, dan Fern. (18)
+5. Untuk meningkatkan performa dari Worker, coba implementasikan PHP-FPM pada Frieren, Flamme, dan Fern. Untuk testing kinerja naikkan 
+- pm.max_children
+- pm.start_servers
+- pm.min_spare_servers
+- pm.max_spare_servers
+sebanyak tiga percobaan dan lakukan testing sebanyak 100 request dengan 10 request/second kemudian berikan hasil analisisnya pada Grimoire.(19)
+5. Nampaknya hanya menggunakan PHP-FPM tidak cukup untuk meningkatkan performa dari worker maka implementasikan Least-Conn pada Eisen. Untuk testing kinerja dari worker tersebut dilakukan sebanyak 100 request dengan 10 request/second. (20)
+
+### 1. Semua data yang diperlukan, diatur pada Denken dan harus dapat diakses oleh Frieren, Flamme, dan Fern. (13)
+konfigurasi database server pada denken:
+```
+apt-get update
+apt-get install mariadb-server -y
+
+a="CREATE USER 'kelompokE06'@'%' IDENTIFIED BY 'pwE06';
+CREATE USER 'kelompokE06'@'localhost' IDENTIFIED BY 'pwE06';
+CREATE DATABASE dbkelompokE06;
+GRANT ALL PRIVILEGES ON *.* TO 'kelompokE06'@'%';
+GRANT ALL PRIVILEGES ON *.* TO 'kelompokE06'@'localhost';
+FLUSH PRIVILEGES;"
+
+echo "$a" > /root/query.sql
+
+mysql < /root/query.sql
+
+ff='[mysqld]
+skip-networking=0
+skip-bind-address'
+
+echo "$ff" >> /etc/mysql/my.cnf
+service mysql restart
+```
+kemudian install database client pada masing masing worker laravel.
+```
+apt-get update
+apt-get install mariadb-client -y
+```
+Test apakah terhubung dengan:
+```
+mariadb --host=192.209.2.2 --port=3306 --user=kelompokE06 --password
+```
+berikut screeshoot salah satu worker.
+
+![mysql](images/mysql.png)
+
+### 2. Frieren, Flamme, dan Fern memiliki Riegel Channel sesuai dengan quest guide berikut. Jangan lupa melakukan instalasi PHP8.0 dan Composer (14)
+berikut configurasi untuk deployment pada masing masing worker:
+```
+apt-get update
+
+apt-get install -y lsb-release ca-certificates apt-transport-https software-properties-common gnupg2
+
+curl -sSLo /usr/share/keyrings/deb.sury.org-php.gpg https://packages.sury.org/php/apt.gpg
+
+sh -c 'echo "deb [signed-by=/usr/share/keyrings/deb.sury.org-php.gpg] https://packages.sury.org/php/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/php.list'
+apt-get update
+
+apt-get install php8.0-mbstring php8.0-xml php8.0-cli php8.0-common php8.0-intl php8.0-opcache php8.0-readline php8.0-mysql php8.0-fpm php8.0-curl unzip wget -y
+
+apt-get install nginx -y
+
+wget https://getcomposer.org/download/2.0.13/composer.phar
+chmod +x composer.phar
+mv composer.phar /usr/bin/composer
+
+apt-get install git -y
+
+cd /var/www
+git clone https://github.com/martuafernando/laravel-praktikum-jarkom.git
+cd /var/www/laravel-praktikum-jarkom
+composer update
 
 
+b='
+APP_NAME=Laravel
+APP_ENV=local
+APP_KEY=
+APP_DEBUG=true
+APP_URL=http://localhost
+
+LOG_CHANNEL=stack
+LOG_DEPRECATIONS_CHANNEL=null
+LOG_LEVEL=debug
+
+DB_CONNECTION=mysql
+DB_HOST=192.209.2.2
+DB_PORT=3306
+DB_DATABASE=dbkelompokE06
+DB_USERNAME=kelompokE06
+DB_PASSWORD=pwE06
+
+BROADCAST_DRIVER=log
+CACHE_DRIVER=file
+FILESYSTEM_DISK=local
+QUEUE_CONNECTION=sync
+SESSION_DRIVER=file
+SESSION_LIFETIME=120
+
+MEMCACHED_HOST=127.0.0.1
+
+REDIS_HOST=127.0.0.1
+REDIS_PASSWORD=null
+REDIS_PORT=6379
+
+MAIL_MAILER=smtp
+MAIL_HOST=mailpit
+MAIL_PORT=1025
+MAIL_USERNAME=null
+MAIL_PASSWORD=null
+MAIL_ENCRYPTION=null
+MAIL_FROM_ADDRESS="hello@example.com"
+MAIL_FROM_NAME="${APP_NAME}"
+
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
+AWS_DEFAULT_REGION=us-east-1
+AWS_BUCKET=
+AWS_USE_PATH_STYLE_ENDPOINT=false
+
+PUSHER_APP_ID=
+PUSHER_APP_KEY=
+PUSHER_APP_SECRET=
+PUSHER_HOST=
+PUSHER_PORT=443
+PUSHER_SCHEME=https
+PUSHER_APP_CLUSTER=mt1
+
+VITE_PUSHER_APP_KEY="${PUSHER_APP_KEY}"
+VITE_PUSHER_HOST="${PUSHER_HOST}"
+VITE_PUSHER_PORT="${PUSHER_PORT}"
+VITE_PUSHER_SCHEME="${PUSHER_SCHEME}"
+VITE_PUSHER_APP_CLUSTER="${PUSHER_APP_CLUSTER}"
+'
+
+echo "$b" > ./.env
+
+php artisan migrate:fresh
+php artisan db:seed --class=AiringsTableSeeder
+
+php artisan key:generate
+
+
+c='server {
+
+    listen 80;
+
+    root /var/www/laravel-praktikum-jarkom/public;
+
+    index index.php index.html index.htm;
+    server_name _;
+
+    location / {
+            try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    # pass PHP scripts to FastCGI server
+    location ~ \.php$ {
+    include snippets/fastcgi-php.conf;
+    fastcgi_pass unix:/var/run/php/php8.0-fpm.sock;
+    }
+
+location ~ /\.ht {
+            deny all;
+    }
+
+    error_log /var/log/nginx/implementasi_error.log;
+    access_log /var/log/nginx/implementasi_access.log;
+}'
+
+echo "$c" > /etc/nginx/sites-available/implementasi
+unlink /etc/nginx/sites-enabled/default
+ln -s /etc/nginx/sites-available/implementasi /etc/nginx/sites-enabled/
+
+chown -R www-data.www-data /var/www/laravel-praktikum-jarkom/storage
+service nginx restart
+service php8.0-fpm start
+php artisan jwt:secret
+
+echo '
+[www]
+
+user = www-data
+group = www-data
+
+listen = /run/php/php8.0-fpm.sock
+
+listen.owner = www-data
+listen.group = www-data
+
+pm = dynamic
+pm.max_children = 25
+pm.start_servers = 7
+pm.min_spare_servers = 6
+pm.max_spare_servers = 10
+' > /etc/php/8.0/fpm/pool.d/www.conf
+
+service php8.0-fpm stop
+service php8.0-fpm start
+```
+kemudian lakukan setting di lb.
+
+```
+ff='upstream granz{
+    server 192.209.3.1;
+    server 192.209.3.2;
+    server 192.209.3.3;
+}
+
+upstream riegel{
+    server 192.209.4.1;
+    server 192.209.4.2;
+    server 192.209.4.3;
+}
+
+server {
+    listen 81;
+    server_name _; # Change to your actual domain
+
+    location / {
+        allow 192.209.3.69;
+        allow 192.209.3.70;
+        allow 192.209.4.167;
+        allow 192.209.4.168;
+        deny all;
+        auth_basic "Restricted Content";
+        auth_basic_user_file /etc/nginx/rahasisakita/htpasswd;
+        proxy_pass http://granz;
+    }
+    location ~* /*its {
+        proxy_pass https://www.its.ac.id;
+    }
+}
+
+server {
+    listen 80;
+    server_name _; # Change to your Laravel domain
+
+    location / {
+        proxy_pass http://riegel;
+    }
+    location ~* /*its {
+        proxy_pass https://www.its.ac.id;
+    }
+}'
+echo "$ff" > /etc/nginx/sites-available/lb-switch3
+service nginx restart
+```
+
+### (15), (16), (17) melakukan register, login, /me
+berikut hasil testing
+![curl](images/curl.png)
