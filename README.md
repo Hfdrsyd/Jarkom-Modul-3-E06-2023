@@ -293,37 +293,43 @@ apt-get install apache2-utils -y
 mkdir -p /etc/nginx/rahasisakita
 htpasswd -cb /etc/nginx/rahasisakita/htpasswd netics ajkE06
 
-ff='upstream granz{
-    server 192.209.3.1 weight=4;
-    server 192.209.3.2 weight=2;
-    server 192.209.3.3 weight=1;
+ff='apt-get update
+apt-get install bind9 nginx -y
+
+ff='
+upstream granz  {
+        server 192.209.3.1 weight=4;
+        server 192.209.3.2 weight=2;
+        server 192.209.3.3 weight=1;
+}
+upstream riegel  {
+        server 192.209.4.1;
+        server 192.209.4.2;
+        server 192.209.4.3;
 }
 
-upstream riegel{
-    server 192.209.4.1;
-    server 192.209.4.2;
-    server 192.209.4.3;
-}
+ server {
+        listen 80;
+        server_name _;
 
-server {
-    listen 81;
-    server_name _; # Change to your actual domain
-
-    location / {
-        auth_basic "Restricted Content";
-        auth_basic_user_file /etc/nginx/rahasisakita/htpasswd;
+        location / {
         proxy_pass http://granz;
-    }
-}
-
+        }
+ }
 server {
-    listen 80;
-    server_name _; # Change to your Laravel domain
+        listen 80;
+        server_name _;
 
-    location / {
+        location / {
         proxy_pass http://riegel;
-    }
-}'
+        }
+ }
+
+'
+
+echo "$ff" > /etc/nginx/sites-available/lb-switch3
+unlink /etc/nginx/sites-enabled/default
+ln -s /etc/nginx/sites-available/lb-switch3 /etc/nginx/sites-enabled/lb-switch3'
 unlink /etc/nginx/sites-enabled/default
 echo "$ff" > /etc/nginx/sites-available/lb-switch4
 ln -sf /etc/nginx/sites-available/lb-switch4 /etc/nginx/sites-enabled/lb-switch4
@@ -332,13 +338,67 @@ ln -sf /etc/nginx/sites-available/lb-switch4 /etc/nginx/sites-enabled/lb-switch4
 
 #### testing dengan 1000 request dan 100 request/second.
 ```
-ab -n 1000 -c 100 -g out.txt http://granz.channel.e06.com/
+ab -n 1000 -c 100 -g out.txt http://192.209.2.3/
 ```
-![htop](nanti diubah)
+![htop](images/no7.png)
 
-![ab](nanti diubah)
+![ab](images/no7_2.png)
 
 ### (8) dan (9)
+### nomer 8
+#### Round Robin
+```
+upstream granz  {
+        server 192.209.3.1;
+        server 192.209.3.2;
+        server 192.209.3.3;
+ }
+```
+#### Weighted Round Robin
+```
+upstream granz  {
+        server 192.209.3.1 weight=4;
+        server 192.209.3.2 weight=2;
+        server 192.209.3.3 weight=1;
+}
+```
+
+#### Least Connection
+```
+upstream granz  {
+        least_conn;
+        server 192.209.3.1;
+        server 192.209.3.2;
+        server 192.209.3.3;
+}
+```
+#### IP Hash
+```
+upstream granz  {
+        ip_hash;
+        server 192.209.3.1;
+        server 192.209.3.2;
+        server 192.209.3.3;
+}
+```
+#### Generic IP Hash
+```
+upstream granz  {
+        hash $request_uri consistent;
+        server 192.209.3.1;
+        server 192.209.3.2;
+        server 192.209.3.3;
+}
+```
+### nomer 9 dapat dilakukan dengan mengurangi satu persatu ip server yang terhubung ke stream.
+```
+upstream granz  {
+        server 192.209.3.1;
+        server 192.209.3.2;
+        server 192.209.3.3;
+ }
+```
+
 #### <a href="https://docs.google.com/document/d/1YD0pExQ0IW7_EknqfYw6FCfXo7eCfq0nbOAaxD0O1EU/edit?usp=sharing">Silahkan buka Grimore disini untuk melihat hasil </a> 
 
 #### (10), (11), dan (12) 
@@ -395,10 +455,13 @@ server {
         proxy_pass https://www.its.ac.id;
     }
 }'
-echo "$ff" > /etc/nginx/sites-available/lb-switch4
+echo "$ff" > /etc/nginx/sites-available/lb-switch3
 service nginx restart
 ```
+![auth](images/auth.png)
 
+![auth](images/redirect.gif)
 
+![auth](images/no12.png)
 
 
