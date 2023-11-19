@@ -648,27 +648,6 @@ chown -R www-data.www-data /var/www/laravel-praktikum-jarkom/storage
 service nginx restart
 service php8.0-fpm start
 php artisan jwt:secret
-
-echo '
-[www]
-
-user = www-data
-group = www-data
-
-listen = /run/php/php8.0-fpm.sock
-
-listen.owner = www-data
-listen.group = www-data
-
-pm = dynamic
-pm.max_children = 25
-pm.start_servers = 7
-pm.min_spare_servers = 6
-pm.max_spare_servers = 10
-' > /etc/php/8.0/fpm/pool.d/www.conf
-
-service php8.0-fpm stop
-service php8.0-fpm start
 ```
 kemudian lakukan setting di lb.
 
@@ -722,3 +701,81 @@ service nginx restart
 ### (15), (16), (17) melakukan register, login, /me
 berikut hasil testing
 ![curl](images/curl.png)
+
+#### /register
+![register](images/register.png)
+
+#### /login
+![login](images/login.png)
+
+#### /me
+![me](images/me.png)
+
+### (18) melakukan proxy bind
+```
+ff='upstream granz{
+    server 192.209.3.1;
+    server 192.209.3.2;
+    server 192.209.3.3;
+}
+
+upstream riegel{
+    server 192.209.4.1;
+    server 192.209.4.2;
+    server 192.209.4.3;
+}
+
+server {
+    listen 81;
+    server_name _; # Change to your actual domain
+
+    location / {
+        allow 192.209.3.69;
+        allow 192.209.3.70;
+        allow 192.209.4.167;
+        allow 192.209.4.168;
+        deny all;
+        auth_basic "Restricted Content";
+        auth_basic_user_file /etc/nginx/rahasisakita/htpasswd;
+        proxy_pass http://granz;
+    }
+    location ~* /*its {
+        proxy_pass https://www.its.ac.id;
+    }
+}
+
+server {
+    listen 80;
+    server_name _; # Change to your Laravel domain
+
+    location / {
+        proxy_pass http://riegel;
+    }
+    location ~* /*its {
+        proxy_pass https://www.its.ac.id;
+    }
+    location /frieren/ {
+        proxy_bind 192.209.2.2;
+        proxy_pass http://192.209.4.1/index.php;
+    }
+
+    location /flamme/ {
+        proxy_bind 192.209.2.2;
+        proxy_pass http://192.209.4.2/index.php;
+    }
+
+    location /fern/ {
+        proxy_bind 192.209.2.2;
+        proxy_pass http://192.209.4.3/index.php;
+    }
+}'
+echo "$ff" > /etc/nginx/sites-available/lb-switch3
+ln -sf /etc/nginx/sites-available/lb-switch3 /etc/nginx/sites-enabled/lb-switch3
+service nginx restart
+```
+lynx http://192.209.2.3/frieren
+```
+
+```
+
+### (19)
