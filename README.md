@@ -773,9 +773,10 @@ echo "$ff" > /etc/nginx/sites-available/lb-switch3
 ln -sf /etc/nginx/sites-available/lb-switch3 /etc/nginx/sites-enabled/lb-switch3
 service nginx restart
 ```
-lynx http://192.209.2.3/frieren
-```
 
 ```
+lynx http://192.209.2.3/frieren
+```
+![image](images/frieren.png)
 
 ### (19)
