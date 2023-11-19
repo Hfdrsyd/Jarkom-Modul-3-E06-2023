@@ -7,6 +7,7 @@ Berikut adalah repository dari kelompok E06 untuk pengerjaan Praktikum Modul 3 J
 | Muhammad Hafidh Rosyadi | 5025211013 |
 | Kartika Diva Asmara Gita | 5025211039 |
 # <a href="https://docs.google.com/document/d/1YD0pExQ0IW7_EknqfYw6FCfXo7eCfq0nbOAaxD0O1EU/edit?usp=sharing">Grimoire Silahkan Pencet sini</a>
+# <a href="https://drive.google.com/file/d/1140rZRdqNunxGZ7bciIC4vixX3Pcsu0X/view?usp=sharing">Topologi Unduh disini</a>
 # Dokumentasi Pengerjaan Soal
 ## Bagian 1
 Setelah mengalahkan Demon King, perjalanan berlanjut. Kali ini, kalian diminta untuk melakukan register domain berupa riegel.canyon.yyy.com untuk worker Laravel dan granz.channel.yyy.com untuk worker PHP **(0)** mengarah pada worker yang memiliki IP [prefix IP].x.1.
