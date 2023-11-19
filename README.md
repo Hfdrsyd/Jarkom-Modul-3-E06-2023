@@ -116,7 +116,7 @@ iface eth0 inet dhcp
 hwaddress ether c2:21:bb:45:de:b9
 ```
 
-- Frieren
+- Freiren
 ```
 auto eth0
 iface eth0 inet dhcp
