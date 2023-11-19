@@ -27,6 +27,56 @@ Lama waktu DHCP server meminjamkan alamat IP kepada Client yang melalui Switch3 
 #### Topologi (1)
 ![Topologi](https://github.com/Hfdrsyd/Jarkom-Modul-3-E06-2023/blob/main/images/topo.png)
 
+#### Konfigurasi  
+- Aura 
+```
+# DHCP config for eth0
+auto eth0
+iface eth0 inet dhcp
+
+# Static config for eth1
+auto eth1
+iface eth1 inet static
+	address 192.209.1.1
+	netmask 255.255.255.0
+
+# Static config for eth2
+auto eth2
+iface eth2 inet static
+	address 192.209.2.1
+	netmask 255.255.255.0
+
+# Static config for eth3
+auto eth3
+iface eth3 inet static
+	address 192.209.3.4
+	netmask 255.255.255.0
+
+# Static config for eth4
+auto eth4
+iface eth4 inet static
+	address 192.209.4.4
+	netmask 255.255.255.0
+```
+
+- Himmel / DHCP Server
+```
+auto eth0
+iface eth0 inet static
+	address 192.209.1.2
+	netmask 255.255.255.0
+	gateway 192.209.1.1
+```
+
+- Heiter / DNS Server
+```
+auto eth0
+iface eth0 inet static
+	address 192.209.1.3
+	netmask 255.255.255.0
+	gateway 192.209.1.1
+```
+
 #### Setting pada Himmel/DHCP Server
 ```
 apt-get update
