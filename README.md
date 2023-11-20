@@ -828,6 +828,8 @@ berikut hasil testing
 #### /me
 ![me](images/me.png)
 
+## Testing Apache benchmark <a href="https://docs.google.com/document/d/1YD0pExQ0IW7_EknqfYw6FCfXo7eCfq0nbOAaxD0O1EU/edit?usp=sharing">Silahkan klik sini di grimoire</a>.
+
 ### (18) melakukan proxy bind
 ```
 ff='upstream granz{
